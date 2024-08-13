@@ -14,12 +14,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.su.sampletypesafenavigation.ui.theme.SampleTypeSafeNavigationTheme
+import com.su.sampletypesafenavigation.util.CustomNavArgType
+import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
+import kotlin.reflect.typeOf
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,9 +43,14 @@ class MainActivity : ComponentActivity() {
                                 })
 
                         }
-                        composable<Profile> { backStackEntry ->
+                        composable<Profile>(
+                            typeMap = mapOf(
+                                typeOf<StudentStatus>() to NavType.EnumType(StudentStatus::class.java),
+                                typeOf<Grade>() to CustomNavArgType.GradeType
+                            )
+                        ) { backStackEntry ->
                             val profile: Profile = backStackEntry.toRoute()
-                            ProfileScreen(profile.id, profile.name)
+                            ProfileScreen(profile.id, "${profile.name} ${profile.status} ${profile.grade.title}")
                         }
                     }
                 }
@@ -69,7 +78,27 @@ fun SettingScreen(
 }
 
 @Serializable
-data class Profile(val id: Int, val name: String)
+data class Profile(
+    val id: Int,
+    val name: String,
+    val status: StudentStatus = StudentStatus.Active,
+    val grade: Grade = Grade.Grade1
+)
+
+
+enum class StudentStatus {
+    Active, InActive
+}
+
+@Serializable
+sealed class Grade(val title: String, val room:String){
+    @Serializable
+    data object Grade1: Grade(title = "Grade-1","A")
+    @Serializable
+    data object Grade2: Grade(title = "Grade-2","B")
+    @Serializable
+    data object Grade3: Grade(title = "Grade-3","C")
+}
 
 @Composable
 fun ProfileScreen(id: Int, name: String) {
